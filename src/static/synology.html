@@ -1,31 +1,36 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>synology Test Page</title>
+  <meta charset="UTF-8">
+  <title>Synology Test Page</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <h1>synology Management</h1>
+  <h1>Synology Management</h1>
 
-  <h2>Add synology</h2>
+  <h2>Add Synology</h2>
   <form id="synologyForm" autocomplete="off">
     <label>
-      User Name:
-      <input type="text" id="username" required>
+      Model:
+      <input type="text" id="model" required>
     </label>
     <label>
-      Full Name:
-      <input type="text" id="full_name" required>
+      Serial:
+      <input type="text" id="serial" required>
     </label>
     <label>
-      Email:
-      <input type="email" id="email" required>
+      RAM (MB):
+      <input type="number" id="ram_mb">
+    </label>
+    <label>
+      DSM Version:
+      <input type="text" id="dsm_version">
     </label>
     <button type="submit">Add</button>
   </form>
   <div id="responseMessage"></div>
 
-  <h2>synology List</h2>
+  <h2>Synology List</h2>
 
   <div id="paginationControls" aria-label="Pagination controls">
     <button id="prevPage" disabled>Previous</button>
@@ -44,7 +49,19 @@
 
   <table id="synologyTable" aria-label="synology list table">
     <thead>
-      <tr><th>ID</th><th>synology Name</th><th>Email</th><th>Full Name</th><th>Create Date</th><th>Update Date</th></tr>
+      <tr>
+        <th>ID</th>
+        <th>Model</th>
+        <th>Serial</th>
+        <th>RAM (MB)</th>
+        <th>DSM Version</th>
+        <th>CPU %</th>
+        <th>Mem %</th>
+        <th>Uptime</th>
+        <th>Temp (°C)</th>
+        <th>Create Date</th>
+        <th>Update Date</th>
+      </tr>
     </thead>
     <tbody></tbody>
   </table>
@@ -60,7 +77,6 @@
 
     let currentPage = 1;
 
-    // Always read pageSize dynamically before load_synology
     function getPageSize() {
       return Number(pageSizeSelect.value);
     }
@@ -81,7 +97,6 @@
         tbody.innerHTML = '';
 
         if (data.length === 0 && page > 1) {
-          // No data on requested page - go back one page and reload
           currentPage = page - 1;
           updatePaginationButtons();
           load_synology(currentPage);
@@ -92,9 +107,14 @@
           tbody.innerHTML += `
             <tr>
               <td>${synology.id}</td>
-              <td>${synology.username}</td>
-              <td>${synology.email}</td>
-              <td>${synology.full_name ?? ''}</td>
+              <td>${synology.model}</td>
+              <td>${synology.serial}</td>
+              <td>${synology.ram_mb ?? ''}</td>
+              <td>${synology.dsm_version ?? ''}</td>
+              <td>${synology.cpu_percent ?? ''}</td>
+              <td>${synology.memory_percent ?? ''}</td>
+              <td>${synology.uptime_days ?? 0}d ${synology.uptime_hours ?? 0}h ${synology.uptime_minutes ?? 0}m</td>
+              <td>${synology.temperature ?? ''}</td>
               <td>${synology.create_date ? new Date(synology.create_date).toLocaleString() : ''}</td>
               <td>${synology.update_date ? new Date(synology.update_date).toLocaleString() : ''}</td>
             </tr>
@@ -113,23 +133,20 @@
 
     function updatePaginationButtons() {
       prevPageBtn.disabled = currentPage <= 1;
-      // Next button is always enabled as before
     }
 
-    // Prev button handler
     prevPageBtn.addEventListener('click', () => {
       if (currentPage > 1) {
         load_synology(currentPage - 1);
       }
     });
 
-    // Next button handler
     nextPageBtn.addEventListener('click', () => {
       load_synology(currentPage + 1);
     });
 
     pageSizeSelect.addEventListener('change', () => {
-      currentPage = 1;  // reset to first page on page size change
+      currentPage = 1;
       load_synology(currentPage);
     });
 
@@ -138,14 +155,15 @@
       responseMessage.textContent = '';
       responseMessage.className = '';
 
-      const username = document.getElementById('username').value.trim();
-      const full_name = document.getElementById('full_name').value.trim();
-      const email = document.getElementById('email').value.trim();
+      const model = document.getElementById('model').value.trim();
+      const serial = document.getElementById('serial').value.trim();
+      const ram_mb = Number(document.getElementById('ram_mb').value.trim()) || null;
+      const dsm_version = document.getElementById('dsm_version').value.trim();
 
       fetch(apiBase, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, full_name, email })
+        body: JSON.stringify({ model, serial, ram_mb, dsm_version })
       })
       .then(async res => {
         const contentType = res.headers.get('content-type') || '';
@@ -160,7 +178,7 @@
           responseMessage.textContent = `Error ${res.status}: ` + (typeof data === 'string' ? data : JSON.stringify(data));
           responseMessage.classList.add('error');
         } else {
-          responseMessage.textContent = `Success ${res.status}: synology added.`;
+          responseMessage.textContent = `Success ${res.status}: Synology added.`;
           responseMessage.classList.add('success');
           document.getElementById('synologyForm').reset();
           load_synology(currentPage);
@@ -172,7 +190,6 @@
       });
     });
 
-    // Initial load
     load_synology(currentPage);
   </script>
 </body>

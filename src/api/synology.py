@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, Body
+from sqlalchemy import desc
 from sqlalchemy.orm import Session
 from framework.db import get_db
 from models.synology import Synology, SynologyCreate
@@ -38,7 +39,12 @@ def list_synology(
     """
     try:
         offset = (page - 1) * limit
-        synology_records = db.query(Synology).offset(offset).limit(limit).all()
+        synology_records = (
+            db.query(Synology)
+            .order_by(desc(Synology.update_date))  # sort descending
+            .offset(offset)
+            .limit(limit)
+            .all())
         return [serialize_sqlalchemy_obj(item) for item in synology_records]
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
