@@ -25,7 +25,7 @@ class Synology(Base):
 
     # System Info
     model = Column(String(50), nullable=False)
-    serial = Column(String(100), nullable=False, unique=True, index=True)
+    serial = Column(String(100), nullable=False, index=True)
     ram_mb = Column(Integer, nullable=True)
     dsm_version = Column(String(100), nullable=True)
 
